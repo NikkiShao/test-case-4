@@ -1,10 +1,84 @@
 import tkinter as tk
 from tkinter import font
 import random
+from snake_game import SnakeGame
 
-class TicTacToeGame:
+class GameHub:
     def __init__(self, root):
         self.root = root
+        self.root.title("Game Hub")
+        self.colors = {
+            "bg": "#282c34",
+            "text": "#ffffff",
+            "button": "#61afef",
+            "button_active": "#c678dd",
+        }
+        self.root.config(bg=self.colors['bg'])
+        self.widgets = {}
+        self.current_game = None
+        self.show_main_menu()
+
+    def clear_widgets(self):
+        if self.current_game and hasattr(self.current_game, 'destroy'):
+            self.current_game.destroy()
+        self.current_game = None
+
+        for widget in self.widgets.values():
+            widget.destroy()
+        self.widgets = {}
+
+    def show_main_menu(self):
+        self.clear_widgets()
+        self.root.title("Game Hub")
+        menu_frame = tk.Frame(self.root, bg=self.colors['bg'])
+        menu_frame.pack(pady=20, expand=True)
+        self.widgets['menu_frame'] = menu_frame
+
+        title_label = tk.Label(menu_frame, text="Select a Game", font=font.Font(size=24, weight="bold"), bg=self.colors['bg'], fg=self.colors['text'])
+        title_label.pack(pady=20)
+        self.widgets['title_label'] = title_label
+
+        ttt_button = tk.Button(
+            menu_frame,
+            text="Tic-Tac-Toe",
+            font=font.Font(size=16),
+            bg=self.colors['button'],
+            fg=self.colors['text'],
+            activebackground=self.colors['button_active'],
+            activeforeground=self.colors['text'],
+            width=15,
+            command=self.start_tic_tac_toe
+        )
+        ttt_button.pack(pady=10)
+        self.widgets['ttt_button'] = ttt_button
+
+        snake_button = tk.Button(
+            menu_frame,
+            text="Snake",
+            font=font.Font(size=16),
+            bg=self.colors['button'],
+            fg=self.colors['text'],
+            activebackground=self.colors['button_active'],
+            activeforeground=self.colors['text'],
+            width=15,
+            command=self.start_snake_game
+        )
+        snake_button.pack(pady=10)
+        self.widgets['snake_button'] = snake_button
+
+    def start_tic_tac_toe(self):
+        self.clear_widgets()
+        self.current_game = TicTacToeGame(self.root, self)
+
+    def start_snake_game(self):
+        self.clear_widgets()
+        self.current_game = SnakeGame(self.root, self)
+
+
+class TicTacToeGame:
+    def __init__(self, root, hub):
+        self.root = root
+        self.hub = hub
         self.root.title("Tic-Tac-Toe")
         self.colors = {
             "bg": "#282c34",
@@ -15,7 +89,6 @@ class TicTacToeGame:
             "player_o": "#98c379",
             "grid": "#3b4048",
         }
-        self.root.config(bg=self.colors['bg'])
         self.game_mode = None
         self.widgets = {}
         self.create_mode_selection_widgets()
@@ -53,6 +126,17 @@ class TicTacToeGame:
         )
         tp_button.pack(pady=10)
         self.widgets['tp_button'] = tp_button
+
+        back_button = tk.Button(
+            mode_frame,
+            text="Back to Hub",
+            font=font.Font(size=12),
+            bg=self.colors['button'],
+            fg=self.colors['text'],
+            command=self.hub.show_main_menu
+        )
+        back_button.pack(pady=20)
+        self.widgets['back_button'] = back_button
 
     def start_game(self, mode):
         self.game_mode = mode
@@ -104,7 +188,7 @@ class TicTacToeGame:
             fg=self.colors['text'],
             activebackground=self.colors['button_active'],
             activeforeground=self.colors['text'],
-            command=self.reset_game,
+            command=lambda: self.start_game(self.game_mode),
         )
         reset_button.pack(pady=10)
         self.widgets['reset_button'] = reset_button
@@ -113,9 +197,6 @@ class TicTacToeGame:
         for widget in self.widgets.values():
             widget.destroy()
         self.widgets = {}
-
-    def reset_game(self):
-        self.create_mode_selection_widgets()
 
     def on_button_click(self, row, col):
         if self.board[row][col] == "":
@@ -128,7 +209,6 @@ class TicTacToeGame:
                 self.end_game(winner)
                 return
 
-            # Switch player
             self.current_player = "O" if self.current_player == "X" else "X"
             self.update_status_label()
 
@@ -136,7 +216,6 @@ class TicTacToeGame:
                 self.disable_board()
                 self.root.after(500, self.computer_move)
             else:
-                # In two-player mode, or when it becomes the human's turn in single-player
                 self.enable_board()
 
     def update_status_label(self):
@@ -198,5 +277,5 @@ class TicTacToeGame:
 
 if __name__ == "__main__":
     root = tk.Tk()
-    game = TicTacToeGame(root)
+    hub = GameHub(root)
     root.mainloop()
