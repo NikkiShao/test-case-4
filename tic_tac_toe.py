@@ -6,30 +6,53 @@ class TicTacToeGame:
     def __init__(self, root):
         self.root = root
         self.root.title("Tic-Tac-Toe")
+        self.colors = {
+            "bg": "#282c34",
+            "text": "#ffffff",
+            "button": "#61afef",
+            "button_active": "#c678dd",
+            "player_x": "#e06c75",
+            "player_o": "#98c379",
+            "grid": "#3b4048",
+        }
+        self.root.config(bg=self.colors['bg'])
         self.game_mode = None
         self.widgets = {}
         self.create_mode_selection_widgets()
 
     def create_mode_selection_widgets(self):
         self.clear_widgets()
-        self.widgets['mode_frame'] = tk.Frame(self.root)
-        self.widgets['mode_frame'].pack(pady=20)
+        mode_frame = tk.Frame(self.root, bg=self.colors['bg'])
+        mode_frame.pack(pady=20, expand=True)
+        self.widgets['mode_frame'] = mode_frame
 
-        self.widgets['sp_button'] = tk.Button(
-            self.widgets['mode_frame'],
+        sp_button = tk.Button(
+            mode_frame,
             text="Single Player",
             font=font.Font(size=16),
+            bg=self.colors['button'],
+            fg=self.colors['text'],
+            activebackground=self.colors['button_active'],
+            activeforeground=self.colors['text'],
+            width=15,
             command=lambda: self.start_game('single')
         )
-        self.widgets['sp_button'].pack(pady=10)
+        sp_button.pack(pady=10)
+        self.widgets['sp_button'] = sp_button
 
-        self.widgets['tp_button'] = tk.Button(
-            self.widgets['mode_frame'],
+        tp_button = tk.Button(
+            mode_frame,
             text="Two Player",
             font=font.Font(size=16),
+            bg=self.colors['button'],
+            fg=self.colors['text'],
+            activebackground=self.colors['button_active'],
+            activeforeground=self.colors['text'],
+            width=15,
             command=lambda: self.start_game('two')
         )
-        self.widgets['tp_button'].pack(pady=10)
+        tp_button.pack(pady=10)
+        self.widgets['tp_button'] = tp_button
 
     def start_game(self, mode):
         self.game_mode = mode
@@ -38,34 +61,53 @@ class TicTacToeGame:
         self.buttons = [[None for _ in range(3)] for _ in range(3)]
         self.create_game_widgets()
         self.update_status_label()
+        self.enable_board()
 
     def create_game_widgets(self):
         self.clear_widgets()
-        board_frame = tk.Frame(self.root)
+        board_frame = tk.Frame(self.root, bg=self.colors['bg'])
         board_frame.pack()
         self.widgets['board_frame'] = board_frame
 
         for row in range(3):
             for col in range(3):
-                self.buttons[row][col] = tk.Button(
+                button = tk.Button(
                     board_frame,
                     text="",
                     font=font.Font(size=24, weight="bold"),
-                    width=6,
-                    height=3,
+                    width=5,
+                    height=2,
+                    bg=self.colors['grid'],
+                    fg=self.colors['text'],
+                    activebackground=self.colors['button_active'],
+                    activeforeground=self.colors['text'],
                     command=lambda r=row, c=col: self.on_button_click(r, c),
                 )
-                self.buttons[row][col].grid(row=row, column=col)
+                button.grid(row=row, column=col, padx=2, pady=2)
+                self.buttons[row][col] = button
 
-        self.widgets['status_label'] = tk.Label(
-            self.root, text="Player X's turn", font=font.Font(size=16)
+        status_label = tk.Label(
+            self.root,
+            text="Player X's turn",
+            font=font.Font(size=16),
+            bg=self.colors['bg'],
+            fg=self.colors['text'],
         )
-        self.widgets['status_label'].pack(pady=10)
+        status_label.pack(pady=10)
+        self.widgets['status_label'] = status_label
 
-        self.widgets['reset_button'] = tk.Button(
-            self.root, text="Reset", font=font.Font(size=16), command=self.reset_game
+        reset_button = tk.Button(
+            self.root,
+            text="Reset",
+            font=font.Font(size=16),
+            bg=self.colors['button'],
+            fg=self.colors['text'],
+            activebackground=self.colors['button_active'],
+            activeforeground=self.colors['text'],
+            command=self.reset_game,
         )
-        self.widgets['reset_button'].pack(pady=10)
+        reset_button.pack(pady=10)
+        self.widgets['reset_button'] = reset_button
 
     def clear_widgets(self):
         for widget in self.widgets.values():
@@ -77,17 +119,25 @@ class TicTacToeGame:
 
     def on_button_click(self, row, col):
         if self.board[row][col] == "":
+            player_color = self.colors['player_x'] if self.current_player == 'X' else self.colors['player_o']
             self.board[row][col] = self.current_player
-            self.buttons[row][col].config(text=self.current_player, state=tk.DISABLED)
+            self.buttons[row][col].config(text=self.current_player, fg=player_color, state=tk.DISABLED)
 
             winner = self.check_winner()
             if winner:
                 self.end_game(winner)
+                return
+
+            # Switch player
+            self.current_player = "O" if self.current_player == "X" else "X"
+            self.update_status_label()
+
+            if self.game_mode == 'single' and self.current_player == 'O':
+                self.disable_board()
+                self.root.after(500, self.computer_move)
             else:
-                self.current_player = "O" if self.current_player == "X" else "X"
-                self.update_status_label()
-                if self.game_mode == 'single' and self.current_player == 'O':
-                    self.root.after(500, self.computer_move) # Add a small delay for better UX
+                # In two-player mode, or when it becomes the human's turn in single-player
+                self.enable_board()
 
     def update_status_label(self):
         if self.game_mode == 'single':
@@ -122,9 +172,7 @@ class TicTacToeGame:
         else:
             self.widgets['status_label'].config(text=f"Player {winner} wins!")
 
-        for row in range(3):
-            for col in range(3):
-                self.buttons[row][col].config(state=tk.DISABLED)
+        self.disable_board()
 
     def computer_move(self):
         empty_cells = []
@@ -136,6 +184,17 @@ class TicTacToeGame:
         if empty_cells:
             row, col = random.choice(empty_cells)
             self.on_button_click(row, col)
+
+    def disable_board(self):
+        for row in range(3):
+            for col in range(3):
+                self.buttons[row][col].config(state=tk.DISABLED)
+
+    def enable_board(self):
+        for row in range(3):
+            for col in range(3):
+                if self.board[row][col] == "":
+                    self.buttons[row][col].config(state=tk.NORMAL)
 
 if __name__ == "__main__":
     root = tk.Tk()
