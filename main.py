@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import font
 import random
 from snake_game import SnakeGame
+from minesweeper_game import MinesweeperGame
 
 class GameHub:
     def __init__(self, root):
@@ -66,6 +67,20 @@ class GameHub:
         snake_button.pack(pady=10)
         self.widgets['snake_button'] = snake_button
 
+        minesweeper_button = tk.Button(
+            menu_frame,
+            text="Minesweeper",
+            font=font.Font(size=16),
+            bg=self.colors['button'],
+            fg=self.colors['text'],
+            activebackground=self.colors['button_active'],
+            activeforeground=self.colors['text'],
+            width=15,
+            command=self.start_minesweeper_game
+        )
+        minesweeper_button.pack(pady=10)
+        self.widgets['minesweeper_button'] = minesweeper_button
+
     def start_tic_tac_toe(self):
         self.clear_widgets()
         self.current_game = TicTacToeGame(self.root, self)
@@ -73,6 +88,10 @@ class GameHub:
     def start_snake_game(self):
         self.clear_widgets()
         self.current_game = SnakeGame(self.root, self)
+
+    def start_minesweeper_game(self):
+        self.clear_widgets()
+        self.current_game = MinesweeperGame(self.root, self)
 
 
 class TicTacToeGame:
