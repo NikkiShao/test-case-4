@@ -10,8 +10,10 @@ test('renders navigation links', () => {
   );
   const homeLink = screen.getByText(/Home/i);
   expect(homeLink).toBeInTheDocument();
-  const aboutLink = screen.getByText(/About/i);
-  expect(aboutLink).toBeInTheDocument();
-  const contactLink = screen.getByText(/Contact/i);
-  expect(contactLink).toBeInTheDocument();
+  const forestLink = screen.getByText(/Forest/i);
+  expect(forestLink).toBeInTheDocument();
+  const fieldLink = screen.getByText(/Field/i);
+  expect(fieldLink).toBeInTheDocument();
+  const seaLink = screen.getByText(/Sea/i);
+  expect(seaLink).toBeInTheDocument();
 });
