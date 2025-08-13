@@ -1,18 +1,49 @@
 import tkinter as tk
 from tkinter import font
+import random
 
 class TicTacToeGame:
     def __init__(self, root):
         self.root = root
         self.root.title("Tic-Tac-Toe")
+        self.game_mode = None
+        self.widgets = {}
+        self.create_mode_selection_widgets()
+
+    def create_mode_selection_widgets(self):
+        self.clear_widgets()
+        self.widgets['mode_frame'] = tk.Frame(self.root)
+        self.widgets['mode_frame'].pack(pady=20)
+
+        self.widgets['sp_button'] = tk.Button(
+            self.widgets['mode_frame'],
+            text="Single Player",
+            font=font.Font(size=16),
+            command=lambda: self.start_game('single')
+        )
+        self.widgets['sp_button'].pack(pady=10)
+
+        self.widgets['tp_button'] = tk.Button(
+            self.widgets['mode_frame'],
+            text="Two Player",
+            font=font.Font(size=16),
+            command=lambda: self.start_game('two')
+        )
+        self.widgets['tp_button'].pack(pady=10)
+
+    def start_game(self, mode):
+        self.game_mode = mode
         self.current_player = "X"
         self.board = [["" for _ in range(3)] for _ in range(3)]
         self.buttons = [[None for _ in range(3)] for _ in range(3)]
-        self.create_widgets()
+        self.create_game_widgets()
+        self.update_status_label()
 
-    def create_widgets(self):
+    def create_game_widgets(self):
+        self.clear_widgets()
         board_frame = tk.Frame(self.root)
         board_frame.pack()
+        self.widgets['board_frame'] = board_frame
 
         for row in range(3):
             for col in range(3):
@@ -26,23 +57,23 @@ class TicTacToeGame:
                 )
                 self.buttons[row][col].grid(row=row, column=col)
 
-        self.status_label = tk.Label(
+        self.widgets['status_label'] = tk.Label(
             self.root, text="Player X's turn", font=font.Font(size=16)
         )
-        self.status_label.pack(pady=10)
+        self.widgets['status_label'].pack(pady=10)
 
-        self.reset_button = tk.Button(
+        self.widgets['reset_button'] = tk.Button(
             self.root, text="Reset", font=font.Font(size=16), command=self.reset_game
         )
-        self.reset_button.pack(pady=10)
+        self.widgets['reset_button'].pack(pady=10)
+
+    def clear_widgets(self):
+        for widget in self.widgets.values():
+            widget.destroy()
+        self.widgets = {}
 
     def reset_game(self):
-        self.current_player = "X"
-        self.board = [["" for _ in range(3)] for _ in range(3)]
-        self.status_label.config(text="Player X's turn")
-        for row in range(3):
-            for col in range(3):
-                self.buttons[row][col].config(text="", state=tk.NORMAL)
+        self.create_mode_selection_widgets()
 
     def on_button_click(self, row, col):
         if self.board[row][col] == "":
@@ -54,7 +85,16 @@ class TicTacToeGame:
                 self.end_game(winner)
             else:
                 self.current_player = "O" if self.current_player == "X" else "X"
-                self.status_label.config(text=f"Player {self.current_player}'s turn")
+                self.update_status_label()
+                if self.game_mode == 'single' and self.current_player == 'O':
+                    self.root.after(500, self.computer_move) # Add a small delay for better UX
+
+    def update_status_label(self):
+        if self.game_mode == 'single':
+            text = "Your turn" if self.current_player == 'X' else "Computer's turn"
+        else:
+            text = f"Player {self.current_player}'s turn"
+        self.widgets['status_label'].config(text=text)
 
     def check_winner(self):
         for i in range(3):
@@ -75,13 +115,27 @@ class TicTacToeGame:
 
     def end_game(self, winner):
         if winner == "draw":
-            self.status_label.config(text="It's a draw!")
+            self.widgets['status_label'].config(text="It's a draw!")
+        elif self.game_mode == 'single':
+            text = "You win!" if winner == 'X' else "Computer wins!"
+            self.widgets['status_label'].config(text=text)
         else:
-            self.status_label.config(text=f"Player {winner} wins!")
+            self.widgets['status_label'].config(text=f"Player {winner} wins!")
 
         for row in range(3):
             for col in range(3):
                 self.buttons[row][col].config(state=tk.DISABLED)
+
+    def computer_move(self):
+        empty_cells = []
+        for r in range(3):
+            for c in range(3):
+                if self.board[r][c] == "":
+                    empty_cells.append((r, c))
+
+        if empty_cells:
+            row, col = random.choice(empty_cells)
+            self.on_button_click(row, col)
 
 if __name__ == "__main__":
     root = tk.Tk()
